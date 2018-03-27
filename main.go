@@ -23,26 +23,57 @@ func main() {
 }
 
 func dirTree(out *os.File, pathDir string, printFiles bool) error {
-	files, err := ioutil.ReadDir(pathDir)
+	//files, err := ioutil.ReadDir(pathDir)
 
-	// sort.Strings(files)
+	err := dirTree1(out, pathDir, printFiles, 0)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, f := range files {
-		switch mode := f.Mode(); {
-		case mode.IsDir():
-			// do directory stuff
-			fmt.Println("dir: ", f.Name())
-			newDir := pathDir + string(os.PathSeparator) + f.Name()
-			err = dirTree(out, newDir, printFiles)
+	return err
+}
 
-		case mode.IsRegular():
-			// do file stuff
-			if printFiles {
-				fmt.Println("file: ", f.Name())
+func dirTree1(out *os.File, pathDir string, printFiles bool, ntabs int) error {
+	files, err := ioutil.ReadDir(pathDir)
+	ntabs++
+	if err != nil {
+		log.Fatal(err)
+	}
+	var prevTabs = ntabs
+
+	for _, f := range files {
+		fmt.Print(prevTabs)
+		for t := 0; t < prevTabs; t++ {
+			if prevTabs > 2 && t > 1 {
+				fmt.Print("│")
+			}
+			fmt.Print("\t")
+		}
+		var fileName string
+		fileName = f.Name()
+		if len(fileName) > 3 {
+			fileName = fileName[0:4]
+		}
+
+		if fileName != ".git" {
+
+			switch mode := f.Mode(); {
+			case mode.IsDir():
+				// do directory stuff
+
+				fmt.Print("├───")
+				fmt.Println(f.Name())
+				newDir := pathDir + string(os.PathSeparator) + f.Name()
+
+				err = dirTree1(out, newDir, printFiles, ntabs)
+
+			case mode.IsRegular():
+				// do file stuff
+				if printFiles {
+					fmt.Print("├───")
+					fmt.Println(f.Name())
+				}
 			}
 		}
 	}
